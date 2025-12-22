@@ -10,8 +10,9 @@ import pandas as pd
 from scipy.stats import chi2, norm
 
 from sureal.core.mixin import TypeVersionEnabled
-from sureal.tools.misc import import_python_file, indices, weighed_nanmean_2d
+from sureal.tools.misc import indices, weighed_nanmean_2d
 from sureal.dataset_reader import RawDatasetReader
+from sureal.dataset_loader import load_dataset
 from sureal.tools.stats import vectorized_gaussian, vectorized_convolution_of_two_logistics, \
     vectorized_convolution_of_two_uniforms
 
@@ -47,7 +48,7 @@ class SubjectiveModel(TypeVersionEnabled):
 
     @classmethod
     def _import_dataset_and_filter(cls, dataset_filepath, content_ids, asset_ids):
-        dataset = import_python_file(dataset_filepath)
+        dataset = load_dataset(dataset_filepath)
         if content_ids is not None:
             dataset.dis_videos = [dis_video for dis_video in dataset.dis_videos if dis_video['content_id'] in content_ids]
         if asset_ids is not None:

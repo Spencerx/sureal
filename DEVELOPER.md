@@ -41,13 +41,26 @@ deactivate
 ```
 - Run the tests:
 ```bash
-# Run all the tests, with all python versions
+# Quick local testing with pytest (recommended for development)
+source .venv/bin/activate
+python -m pytest test/ -v
+
+# Run a specific test file
+python -m pytest test/dataset_loader_test.py -v
+
+# Run a specific test
+python -m pytest test/ -k test_btnr_subjective_model -v
+
+# Stop on first failure
+python -m pytest test/ -x
+
+# Run all the tests with tox (all python versions)
 tox
 
 # Run tests with python 3.7 only
 tox -e py37
 
-# Quickly run just one given test:
+# Quickly run just one given test with tox:
 tox -- -k test_btnr_subjective_model
 
 # Same, but with python3.7 only:
