@@ -3,3 +3,4 @@ scipy>=0.17.1
 matplotlib>=2.0.0
 pandas>=0.19.2
 setupmeta
+pyyaml>=5.0  # Optional: for YAML dataset support

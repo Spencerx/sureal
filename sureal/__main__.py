@@ -16,7 +16,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--dataset", dest="dataset", nargs=1, type=str,
-        help="Path to the dataset file.",
+        help="Path to the dataset file. Supported formats: JSON (.json), YAML (.yaml, .yml), Python (.py).",
         required=True)
     parser.add_argument(
         "--models", dest="models", nargs="+", type=str,

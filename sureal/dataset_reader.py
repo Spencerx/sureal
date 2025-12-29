@@ -91,6 +91,8 @@ class DatasetReader(object):
         assert (hasattr(dataset, 'dis_videos'))
         # write out
         with open(output_dataset_filepath, 'wt') as output_file:
+            # Add numpy import for nan values
+            output_file.write('import numpy as np\n\n')
             for key in dataset.__dict__.keys():
                 if key != 'ref_videos' and key != 'dis_videos' \
                         and key != 'subjects' and not key.startswith('__'):

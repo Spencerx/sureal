@@ -77,9 +77,9 @@ This will print usage information::
 
 Below are two example usages::
 
-    sureal --dataset resource/dataset/NFLX_dataset_public_raw_last4outliers.py --models MOS P910 \
+    sureal --dataset resource/dataset/NFLX_dataset_public_raw_last4outliers.json --models MOS P910 \
         --plot-raw-data --plot-dis-videos --plot-observers --output-dir ./output/NFLX_dataset_public_raw_last4outliers
-    sureal --dataset resource/dataset/VQEGHD3_dataset_raw.py --models MOS P910 \
+    sureal --dataset resource/dataset/VQEGHD3_dataset_raw.json --models MOS P910 \
         --plot-raw-data --plot-dis-videos --plot-observers --output-dir ./output/VQEGHD3_dataset_raw
 
 Here ``--models`` are the available subjective models offered in the package, including:
@@ -94,7 +94,7 @@ Here ``--models`` are the available subjective models offered in the package, in
 
 The `sureal` command can also invoke subjective models for paired comparison (PC) subjective data. Below is one example::
 
-    sureal --dataset resource/dataset/lukas_pc_dataset.py --models THURSTONE_MLE BT_MLE \
+    sureal --dataset resource/dataset/lukas_pc_dataset.json --models THURSTONE_MLE BT_MLE \
     --plot-raw-data --plot-dis-videos --output-dir ./output/lukas_pc_dataset
 
 Here ``--models`` are the available PC subjective models offered in the package:
@@ -109,79 +109,133 @@ Dataset files
 -------------
 
 ``--dataset`` is the path to a dataset file.
-Dataset files may be ``.py`` or ``.json`` files.
-The following examples use ``.py`` files, but JSON-formatted files can be constructed in a similar fashion.
 
-There are two ways to construct a dataset file.
-The first way is only useful when the subjective test is full sampling,
-i.e. every subject views every distorted video. For example::
+SUREAL supports three dataset file formats:
 
-    ref_videos = [
+- JSON (``.json``) - Recommended. Easy to generate programmatically.
+- YAML (``.yaml``, ``.yml``) - More human-readable alternative to JSON.
+- Python (``.py``) - Legacy format, still fully supported.
+
+The format is auto-detected based on file extension.
+
+Dataset structure
+~~~~~~~~~~~~~~~~~
+
+A dataset contains two required fields:
+
+- ``ref_videos`` - List of reference (source) videos
+- ``dis_videos`` - List of distorted (test) videos with opinion scores
+
+Optional fields include ``dataset_name``, ``ref_score``, ``yuv_fmt``, ``width``, ``height``, etc.
+
+Example: JSON format
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: json
+
+    {
+      "dataset_name": "my_experiment",
+      "ref_score": 5.0,
+      "ref_videos": [
+        {"content_id": 0, "content_name": "checkerboard", "path": "ref/checkerboard.yuv"},
+        {"content_id": 1, "content_name": "flat", "path": "ref/flat.yuv"}
+      ],
+      "dis_videos": [
         {
-          'content_id': 0, 'content_name': 'checkerboard',
-          'path': 'checkerboard_1920_1080_10_3_0_0.yuv'
+          "content_id": 0, "asset_id": 0,
+          "os": {"Alice": 5, "Bob": 4, "Charlie": 5},
+          "path": "ref/checkerboard.yuv"
         },
         {
-          'content_id': 1, 'content_name': 'flat',
-          'path': 'flat_1920_1080_0.yuv'
-        },
-    ]
-    dis_videos = [
-        {
-          'content_id': 0, 'asset_id': 0,
-          'os': [100, 100, 100, 100, 100],
-          'path': 'checkerboard_1920_1080_10_3_0_0.yuv'
+          "content_id": 0, "asset_id": 1,
+          "os": {"Alice": 2, "Bob": 3, "Charlie": 2},
+          "path": "dis/checkerboard_q1.yuv"
         },
         {
-          'content_id': 0, 'asset_id': 1,
-          'os': [40, 45, 50, 55, 60],
-          'path': 'checkerboard_1920_1080_10_3_1_0.yuv'
-        },
-        {
-          'content_id': 1, 'asset_id': 2,
-          'os': [90, 90, 90, 90, 90],
-          'path': 'flat_1920_1080_0.yuv'
-        },
-        {
-          'content_id': 1, 'asset_id': 3,
-          'os': [70, 75, 80, 85, 90],
-          'path': 'flat_1920_1080_10.yuv'
-        },
-    ]
-    ref_score = 100
+          "content_id": 1, "asset_id": 2,
+          "os": {"Alice": 4, "Bob": 5, "Charlie": 4},
+          "path": "dis/flat_q1.yuv"
+        }
+      ]
+    }
 
+Example: YAML format
+~~~~~~~~~~~~~~~~~~~~
 
-In this example, ``ref_videos`` is a list of reference videos.
-Each entry is a dictionary, and must have keys ``content_id``, ``content_name`` and ``path`` (the path to the reference video file).
-``dis_videos`` is a list of distorted videos.
-Each entry is a dictionary, and must have keys ``content_id`` (the same content ID as the distorted video's corresponding reference video),
-``asset_id``, ``os`` (stands for "opinion score"), and ``path`` (the path to the distorted video file).
-The value of ``os`` is a list of scores, reach voted by a subject, and must have the same length for all distorted videos
-(since it is full sampling).
-``ref_score`` is the score assigned to a reference video, and is required when differential score is calculated,
-for example, in DMOS.
+.. code-block:: yaml
 
-The second way is more general, and can be used when the test is full sampling or partial sampling
-(i.e. not every subject views every distorted video). The only difference from the first way is that, the value of ``os`` is now a dictionary, with the key being a subject ID,
-and the value being his/her voted score for particular distorted video. For example::
+    dataset_name: my_experiment
+    ref_score: 5.0
 
-    'os': {'Alice': 40, 'Bob': 45, 'Charlie': 50, 'David': 55, 'Elvis': 60}
+    ref_videos:
+      - content_id: 0
+        content_name: checkerboard
+        path: ref/checkerboard.yuv
+      - content_id: 1
+        content_name: flat
+        path: ref/flat.yuv
 
+    dis_videos:
+      - content_id: 0
+        asset_id: 0
+        path: ref/checkerboard.yuv
+        os:
+          Alice: 5
+          Bob: 4
+          Charlie: 5
+      - content_id: 0
+        asset_id: 1
+        path: dis/checkerboard_q1.yuv
+        os:
+          Alice: 2
+          Bob: 3
+          Charlie: 2
 
-Since partial sampling is allowed, it is not required that every subject ID is present in every ``os`` dictionary.
+Field descriptions
+~~~~~~~~~~~~~~~~~~
 
-In case a subject has voted a distorted video twice or more (repetitions), the votes can be logged by having a list in lieu of single vote. For example::
+``ref_videos`` entries must each have:
 
-    'os': {'Alice': 40, 'Bob': [45, 45], 'Charlie': [50, 60], 'David': 55, 'Elvis': 60}
+- ``content_id`` - Unique integer ID for the source content (0 to N-1, no gaps)
+- ``content_name`` - Human-readable name for the content
+- ``path`` - Path to the reference video file
 
+``dis_videos`` entries must each have:
 
-In case of a PC dataset, a distorted video is compared against another distorted video, and a vote is recorded. In this case, the key is a tuple of the subject name and the `asset_id` of the distorted video compared against. For example::
+- ``content_id`` - Must match a ``content_id`` from ``ref_videos``
+- ``asset_id`` - Unique integer ID for this distorted video
+- ``path`` - Path to the distorted video file
+- ``os`` - Opinion scores (see formats below)
 
-    'os': {('Alice', 1): 40, ('Bob', 3): 45}
+``ref_score`` is the score assigned to a reference video, required when calculating differential scores (e.g., DMOS).
 
-where 1 and 3 are the `asset_id` of the distorted videos compared against. For an example PC dataset, refer to `lukas_pc_dataset.py <resource/dataset/lukas_pc_dataset.py>`_.
+Opinion score formats
+~~~~~~~~~~~~~~~~~~~~~
 
-Note that for PC models, we current do not yet support repetitions.
+There are multiple ways to represent opinion scores in the ``os`` field of each distorted video.
+
+**Full sampling (list format)** - When every subject views every video, ``os`` can be a list.
+All distorted videos must have the same number of scores::
+
+    "os": [5, 4, 5, 3, 4]
+
+**Partial sampling (dictionary format)** - More flexible. Subject IDs as keys, scores as values.
+Not every subject needs to appear in every ``os`` dictionary::
+
+    "os": {"Alice": 5, "Bob": 4, "Charlie": 5}
+
+**With repetitions** - When a subject votes multiple times, use a list for their scores::
+
+    "os": {"Alice": 5, "Bob": [4, 4], "Charlie": [5, 4, 5]}
+
+**Paired comparison (PC) format** - For PC datasets, the key is a tuple of subject name and the ``asset_id`` of the compared video::
+
+    "os": {["Alice", 1]: 1, ["Bob", 3]: 0}
+
+where 1 and 3 are the ``asset_id`` of the videos compared against, and the values indicate the comparison result.
+For an example PC dataset, refer to `lukas_pc_dataset.json <resource/dataset/lukas_pc_dataset.json>`_.
+
+Note that for PC models, we currently do not yet support repetitions.
 
 Deprecated command line
 ================================

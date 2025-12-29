@@ -22,8 +22,8 @@ except (ImportError, RuntimeError):
 
 from sureal.dataset_reader import RawDatasetReader, PairedCompDatasetReader, \
     MissingDataRawDatasetReader, SelectSubjectRawDatasetReader
-from sureal.tools.misc import import_python_file, import_json_file, Timer, \
-    cmap_factory
+from sureal.dataset_loader import load_dataset
+from sureal.tools.misc import Timer, cmap_factory
 
 __copyright__ = "Copyright 2016-2018, Netflix, Inc."
 __license__ = "Apache, Version 2.0"
@@ -80,12 +80,7 @@ def run_subjective_models(dataset_filepath, subjective_model_classes, do_plot=No
 
     colors = ['black', 'gray', 'blue', 'red'] * 2
 
-    if dataset_filepath.endswith('.py'):
-        dataset = import_python_file(dataset_filepath)
-    elif dataset_filepath.endswith('.json'):
-        dataset = import_json_file(dataset_filepath)
-    else:
-        raise AssertionError("Unknown input type, must be .py or .json")
+    dataset = load_dataset(dataset_filepath)
     dataset_reader = dataset_reader_class(dataset, input_dict=dataset_reader_info_dict)
 
     subjective_models = [
@@ -734,7 +729,7 @@ def format_output_of_run_subjective_models(dataset, subjective_models, results):
 
 def visualize_pc_dataset(dataset_filepath):
 
-    dataset = import_python_file(dataset_filepath)
+    dataset = load_dataset(dataset_filepath)
     dataset_reader = PairedCompDatasetReader(dataset)
     tensor_pvs_pvs_subject = dataset_reader.opinion_score_3darray
 
@@ -772,7 +767,7 @@ def validate_with_synthetic_dataset(synthetic_dataset_reader_class,
         measure_runtime = more['measure_runtime'] if 'measure_runtime' in more else False
         assert isinstance(measure_runtime, bool)
 
-        dataset = import_python_file(dataset_filepath)
+        dataset = load_dataset(dataset_filepath)
         dataset_reader = synthetic_dataset_reader_class(dataset, input_dict=synthetic_result)
 
         if missing_probability is not None:
@@ -1029,12 +1024,7 @@ def get_sample_stats(datasets, subjective_model_classes, do_plot=False, plot_typ
         else:
             assert 0.0 < subj_fraction <= 1.0
 
-            if dataset_filepath.endswith('.py'):
-                dataset = import_python_file(dataset_filepath)
-            elif dataset_filepath.endswith('.json'):
-                dataset = import_json_file(dataset_filepath)
-            else:
-                raise AssertionError("Unknown input type, must be .py or .json")
+            dataset = load_dataset(dataset_filepath)
             dataset_reader = RawDatasetReader(dataset, input_dict=dataset_reader_info_dict)
             num_subj = dataset_reader.num_observers
             frac_num_subj = int(num_subj * subj_fraction)
